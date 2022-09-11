@@ -33,7 +33,7 @@ cat > $WORK_DIR/$CN_RSC << EOF
 /ip firewall address-list remove [/ip firewall address-list find list=CN_CIDR_V4]
 /ip firewall address-list
 EOF
-cat $WORK_DIR/CN_IPV4_CIDR.txt | awk '{ printf(":do {add address=%s list=CN_CIDR_V4} on-error={}\n",$0) }' >> $WORK_DIR/$CN_RSC && \
+cat $WORK_DIR/$CN_TXT | awk '{ printf(":do {add address=%s list=CN_CIDR_V4} on-error={}\n",$0) }' >> $WORK_DIR/$CN_RSC && \
 echo "}" >> $WORK_DIR/$CN_RSC
 
 
