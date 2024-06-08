@@ -361,6 +361,7 @@
 :do {add address=38.103.64.26/32 list=CN_CIDR_V4} on-error={}
 :do {add address=38.120.6.112/29 list=CN_CIDR_V4} on-error={}
 :do {add address=38.196.176.0/24 list=CN_CIDR_V4} on-error={}
+:do {add address=38.224.60.0/24 list=CN_CIDR_V4} on-error={}
 :do {add address=39.0.0.0/24 list=CN_CIDR_V4} on-error={}
 :do {add address=39.0.2.0/23 list=CN_CIDR_V4} on-error={}
 :do {add address=39.0.4.0/22 list=CN_CIDR_V4} on-error={}
@@ -5790,7 +5791,6 @@
 :do {add address=154.8.128.0/17 list=CN_CIDR_V4} on-error={}
 :do {add address=154.17.148.0/24 list=CN_CIDR_V4} on-error={}
 :do {add address=154.18.7.194/32 list=CN_CIDR_V4} on-error={}
-:do {add address=154.28.138.0/23 list=CN_CIDR_V4} on-error={}
 :do {add address=154.36.92.0/23 list=CN_CIDR_V4} on-error={}
 :do {add address=154.72.44.0/24 list=CN_CIDR_V4} on-error={}
 :do {add address=155.126.176.0/23 list=CN_CIDR_V4} on-error={}
