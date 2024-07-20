@@ -514,7 +514,6 @@
 :do {add address=43.129.104.0/21 list=CN_CIDR_V4} on-error={}
 :do {add address=43.129.112.0/20 list=CN_CIDR_V4} on-error={}
 :do {add address=43.129.128.0/20 list=CN_CIDR_V4} on-error={}
-:do {add address=43.129.144.0/21 list=CN_CIDR_V4} on-error={}
 :do {add address=43.129.152.0/22 list=CN_CIDR_V4} on-error={}
 :do {add address=43.136.0.0/13 list=CN_CIDR_V4} on-error={}
 :do {add address=43.144.0.0/13 list=CN_CIDR_V4} on-error={}
