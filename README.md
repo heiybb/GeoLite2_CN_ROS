@@ -47,18 +47,27 @@ The merged list is the drop-in choice if you just want "route this traffic the
 China-optimised way". Note that HK and SG are APAC cloud/CDN hubs — AWS
 ap-southeast-1, Cloudflare, and plenty of SaaS APAC endpoints live in those
 ranges, and the merged list drags all of them into the same policy. The lists are
-also large: HK and SG are heavily fragmented, roughly 10k prefixes each, so the
-merged list runs to tens of thousands of entries. On a 256MB device (hEX and
-friends) watch import time and memory.
+also large — HK and SG are far more fragmented than CN:
+
+| List | Entries (2026-09-08 database) |
+|---|---|
+| `CN_CIDR_V4` | ~8,200 |
+| `HK_CIDR_V4` | ~14,600 |
+| `SG_CIDR_V4` | ~11,500 |
+| `CN_HK_SG_CIDR_V4` | ~34,300 |
+
+That is four times the old CN-only list. On a 256MB device (hEX and friends)
+watch import time and memory before committing to the merged list.
 
 Per-region lists let you give CN its own policy and treat HK/SG as a fallback, or
 skip them entirely. That is usually the better shape.
 
 **If you are upgrading from the old CN-only version, do not keep importing only
 `CN_CIDR_V4.rsc`.** The old script matched any block whose *registered* country was
-China, which pulled roughly 335 Hong Kong / Singapore prefixes into `CN_CIDR_V4`.
-Those prefixes now go to `HK_CIDR_V4` / `SG_CIDR_V4` instead. They are still in the
-merged list, but a CN-only import will no longer see them.
+China, which pulled 339 Hong Kong / Singapore prefixes into `CN_CIDR_V4` (289 HK,
+50 SG, measured against the 2026-09-05 list). Those prefixes now go to
+`HK_CIDR_V4` / `SG_CIDR_V4` instead. They are still in the merged list, but a
+CN-only import will no longer see them.
 
 ## Configuration
 
