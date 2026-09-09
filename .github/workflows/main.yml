@@ -1,10 +1,10 @@
-name: Update IP CIDR lists
+name: Get Geolite2 ipv4
 on:
   schedule:
     - cron: "0 3 * * *"
   workflow_dispatch:
 jobs:
-  build_lists:
+  fetch_geolite2_ipv4:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -12,14 +12,11 @@ jobs:
       - name: Linux update
         run: |
           sudo apt update
-          sudo apt -y install file curl python3
+          sudo apt -y install file curl
       - name: Update
         run: bash update.sh
         env:
-          IPINFO_TOKEN: ${{secrets.IPINFO_TOKEN}}
-          # 隧道端点那个 /32。放 secret 里,GitHub 会在日志中打码;
-          # 脚本本身也只打条数不打原文。
-          EXCLUDE_CIDR: ${{secrets.EXCLUDE_CIDR}}
+          GEOLITE2_LICENSE_KEY: ${{secrets.GEOLITE2_LICENSE_KEY}}
       - name: Commit
         run: |
           git diff
