@@ -139,75 +139,18 @@ Only `ipinfo_lite.*` is downloadable on the free tier; `location.csv.gz`,
 
 ## Cloudflare Worker
 
-`worker/` holds a second implementation that runs the same pipeline on a
-Cloudflare cron trigger and serves the lists from R2, so the router fetches from
-the Cloudflare edge instead of `raw.githubusercontent.com`.
+There is a second implementation of this same pipeline that runs on a
+Cloudflare cron trigger and serves the lists from R2, so the router fetches
+from the Cloudflare edge instead of `raw.githubusercontent.com`. It lives in
+its own project, `cidr-lists`.
 
-It is a port, not a rewrite: `worker/test/compare.mjs` runs the Worker's logic
-under node against the same inputs and diffs the result against what
-`generate.py` produced. All eight files must come out byte-identical.
+It is a port, not a rewrite: its `test/compare.mjs` runs the Worker logic
+under node against the same inputs and diffs every output against what
+`generate.py` here produces. All eight files come out byte-identical, and that
+is the acceptance test for the port.
 
-```bash
-cd worker && npm install
-node test/compare.mjs /path/to/ipinfo_lite.csv.gz /path/to/ServiceTags_Public_*.json '<ENDPOINT_IP>/32'
-```
-
-### Consistency model
-
-Each run writes to `v/<generation>/…` and only flips the `current.json` pointer
-once every file has been written. A run that dies partway through leaves an
-orphaned generation that nothing points at, and the router keeps getting the
-previous complete generation — it can never import a half-written list and
-flush its own address-list. Old generations are pruned to `KEEP_GENERATIONS`,
-and they double as the diff history: to see why a list changed, diff two
-generations' `.txt`.
-
-`current.json` also carries per-list counts and the delta against the previous
-run, and `history.json` keeps the last 90 runs. A list that suddenly loses
-several thousand prefixes shows up there.
-
-### Deploy
-
-Needs Workers Paid: a cron trigger on the free plan gets 10 ms of CPU, and this
-job uses about 2.4 s. Crons with an interval of an hour or more get 15 minutes.
-
-```bash
-cd worker
-npm install
-npx wrangler login
-npx wrangler r2 bucket create cidr-lists
-npx wrangler secret put IPINFO_TOKEN
-npx wrangler secret put EXCLUDE_CIDR    # your tunnel endpoint, e.g. 203.0.113.7/32
-npx wrangler deploy
-npx wrangler deploy --dry-run           # config/bundle check, no account needed
-```
-
-Then run it once by hand rather than waiting for the cron, and check the result:
-
-```bash
-curl https://<your-worker>/status
-curl https://<your-worker>/CN_HK_SG_CIDR_V4.rsc | head -3
-```
-
-Point the router at it:
-
-```
-/tool fetch url="https://<your-worker>/CN_HK_SG_CIDR_V4.rsc" dst-path=CN_HK_SG_CIDR_V4.rsc;
-/import file-name=CN_HK_SG_CIDR_V4.rsc;
-```
-
-Non-secret settings (`COUNTRIES`, `COMBINED_NAME`, `EXCLUDE_AZURE_REGIONS`,
-`KEEP_GENERATIONS`) live in `worker/wrangler.jsonc` under `vars`.
-
-### Why the CSV and not mmdb or parquet
-
-IPinfo publishes the same data as `.mmdb` and `.parquet`. Measured, the CSV is
-the smallest download of the four (21.6 MiB, vs 22.7 mmdb, 24.1 parquet, 25.3
-json.gz), and it is the only one that streams. MMDB is a lookup structure —
-enumerating every prefix in a region means walking its search trie yourself,
-which is more code than `split(",")`, and the reader needs the whole file
-buffered. Parquet needs a decoder bundled into the Worker and range requests
-through a signed redirect. The parse was never the expensive part.
+Both run for now. This one is the reference implementation and keeps the git
+diff history; retire it once the Worker has a few days of clean output.
 
 ## Layout
 
@@ -215,12 +158,6 @@ through a signed redirect. The parse was never the expensive part.
   Azure URL, hands off to `generate.py`
 - `generate.py` — streams the ~3.4M-row IPinfo CSV, collects integer intervals
   per region, merges, subtracts exclusions, emits CIDRs and the `.rsc` files
-- `worker/src/lib.js` — the same pipeline in JS, no Workers-specific APIs, so it
-  can be tested under node. IPv4 is handled as unsigned integer intervals using
-  arithmetic, never bitwise: JS coerces `<<` and `&` operands to int32, so
-  `128 << 24` is negative and `x & -x` is wrong above 2^31
-- `worker/src/index.js` — cron handler, R2 writes, generation pointer, and the
-  HTTP handler the router fetches from
 
 Both bail out with a non-zero exit on an empty region, an emptied region, an
 unparseable header, a bad exclusion, overlapping source regions, or an exclusion
