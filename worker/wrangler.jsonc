@@ -1,0 +1,43 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "cidr-lists",
+	"main": "src/index.js",
+	"compatibility_date": "2026-09-09",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// 每天 UTC 03:00。间隔 >= 1 小时,所以这个 cron 拿到的是 15 分钟 CPU 额度
+	// (< 1 小时间隔只有 30 秒)。实测这个活儿约 2.4 秒。
+	"triggers": {
+		"crons": ["0 3 * * *"]
+	},
+
+	// 默认 30 秒足够,写死一个上限只为防跑飞:数据源突然变大时宁可失败,
+	// 也不要静默烧 CPU。
+	"limits": {
+		"cpu_ms": 120000
+	},
+
+	"r2_buckets": [
+		{
+			"binding": "LISTS",
+			"bucket_name": "cidr-lists"
+		}
+	],
+
+	"vars": {
+		"COUNTRIES": "CN HK SG",
+		"COMBINED_NAME": "CN_HK_SG_CIDR_V4",
+		"EXCLUDE_AZURE_REGIONS": "southeastasia",
+		"KEEP_GENERATIONS": "14"
+	},
+
+	// IPINFO_TOKEN 和 EXCLUDE_CIDR 走 secret,不进这个文件:
+	//   npx wrangler secret put IPINFO_TOKEN
+	//   npx wrangler secret put EXCLUDE_CIDR
+	// EXCLUDE_CIDR 放隧道端点的 /32,代码只记条数不记原文。
+
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1
+	}
+}
